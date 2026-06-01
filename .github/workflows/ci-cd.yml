@@ -1,0 +1,66 @@
+name: CloudSnap CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    # Setup database service container directly inside the GitHub Actions runner
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_test_pass_99
+          MYSQL_DATABASE: s3_image_manager_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Syntax and Build Verification
+        run: |
+          node -c server.js
+          node -c src/config/db.js
+          node -c src/config/s3.js
+
+      - name: Test Database Auto-Initialization & Express Bootstrap
+        env:
+          PORT: 3500
+          NODE_ENV: test
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASS: root_test_pass_99
+          DB_NAME: s3_image_manager_test
+          AWS_S3_BUCKET: test-dummy-bucket
+          AWS_REGION: us-east-1
+        run: |
+          # Start the server in the background and wait for it to auto-initialize DB tables
+          node server.js &
+          SERVER_PID=$!
+          
+          # Wait 8 seconds for MySQL service readiness and Express bootup
+          sleep 8
+          
+          # Test if the API endpoint responds with a 200 status code
+          curl -s -f http://localhost:3500/api/images || exit 1
+          
+          # Cleanly terminate the background server process
+          kill $SERVER_PID
