@@ -72,7 +72,7 @@
 
       <!-- Drag & Drop upload area -->
       <div id="dropzone" class="border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center min-h-[220px]">
-        <input type="file" id="file-input" class="hidden" accept="image/*">
+        <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
         
         <div class="h-16 w-16 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shadow-sm mb-4">
           <svg class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -80,28 +80,13 @@
           </svg>
         </div>
 
-        <p class="font-semibold text-slate-700 text-base">Drag & drop your image here, or <span class="text-indigo-600 font-bold hover:underline">browse</span></p>
-        <p class="text-xs text-slate-400 mt-2">Supports JPG, PNG, GIF, WEBP, SVG & BMP (Max size 10MB)</p>
+        <p class="font-semibold text-slate-700 text-base">Drag & drop your images here, or <span class="text-indigo-600 font-bold hover:underline">browse</span></p>
+        <p class="text-xs text-slate-400 mt-2">Supports JPG, PNG, GIF, WEBP, SVG & BMP (Max size 10MB per file)</p>
       </div>
 
-      <!-- Local Image Preview and File Details Card (hidden by default) -->
-      <div id="preview-container" class="hidden mt-6 bg-slate-50/70 border border-slate-100 rounded-2xl p-5 flex items-center gap-4 transition-all duration-300">
-        <div class="relative h-20 w-20 flex-shrink-0 bg-slate-200 border border-slate-100 rounded-xl overflow-hidden shadow-sm">
-          <img id="image-preview" src="#" alt="Preview" class="h-full w-full object-cover">
-        </div>
-        <div class="flex-grow min-w-0">
-          <p id="file-name" class="text-sm font-semibold text-slate-800 truncate">image-name.jpg</p>
-          <div class="flex gap-3 text-xs text-slate-500 mt-1">
-            <span id="file-size">1.2 MB</span>
-            <span>•</span>
-            <span id="file-type">image/jpeg</span>
-          </div>
-        </div>
-        <button id="remove-btn" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all" title="Remove image">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-          </svg>
-        </button>
+      <!-- Local Image Previews Container (hidden by default) -->
+      <div id="preview-container" class="hidden mt-6 flex flex-col gap-3 max-h-[360px] overflow-y-auto pr-1">
+        <!-- Individual preview cards will be injected dynamically -->
       </div>
 
       <!-- Upload Progress Card (hidden by default) -->
