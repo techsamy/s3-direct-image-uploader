@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudSnap - S3 Direct Image Manager</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts - Plus Jakarta Sans & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            outfit: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background: radial-gradient(circle at 10% 20%, rgba(243, 246, 255, 1) 0%, rgba(250, 251, 255, 1) 90%);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    .shimmer {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: loading-shimmer 1.5s infinite linear;
+    }
+    @keyframes loading-shimmer {
+      to {
+        background-position: -200% 0;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-700 flex flex-col font-sans">
+
+  <!-- Main Navigation Header -->
+  <nav class="sticky top-0 z-40 w-full glass-card border-b border-slate-100/80 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform duration-300">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+        </div>
+        <span class="font-outfit font-bold text-xl text-slate-800 tracking-tight">Cloud<span class="text-indigo-600">Snap</span></span>
+      </a>
+      <a href="/upload.html" class="flex items-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-100 hover:shadow-indigo-200 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200">
+        <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Upload New
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main class="flex-grow max-w-7xl w-full mx-auto p-6 lg:p-8 flex flex-col gap-6">
+    
+    <!-- Hero Filter Section -->
+    <div class="w-full glass-card rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center gap-4 justify-between">
+      <!-- Search Box -->
+      <div class="relative w-full sm:max-w-md">
+        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.602 10.602z" />
+          </svg>
+        </span>
+        <input type="text" id="search-input" placeholder="Search by file name..." class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200/80 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700 placeholder-slate-400">
+      </div>
+      
+      <!-- Counter & Page size Selector -->
+      <div class="flex items-center gap-4 text-xs font-semibold text-slate-500 justify-between w-full sm:w-auto">
+        <div class="flex items-center gap-2">
+          <span>Items per page:</span>
+          <select id="limit-select" class="bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-600 focus:outline-none focus:border-indigo-500">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <span id="total-count-label" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100/50">Total: 0 images</span>
+      </div>
+    </div>
+
+    <!-- Images List Grid/Table View -->
+    <div class="w-full glass-card rounded-3xl shadow-md overflow-hidden border border-slate-100/80">
+      <!-- Loading Skeleton (visible while fetching) -->
+      <div id="skeleton-loading" class="hidden divide-y divide-slate-100">
+        <div class="p-6 flex items-center justify-between"><div class="shimmer h-8 w-1/4 rounded-lg"></div><div class="shimmer h-8 w-1/12 rounded-lg"></div></div>
+        <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/3 rounded"></div><div class="shimmer h-4 w-1/6 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
+        <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/4 rounded"></div><div class="shimmer h-4 w-1/5 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
+        <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/2 rounded"></div><div class="shimmer h-4 w-1/8 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
+      </div>
+
+      <!-- Empty State Card (visible when no records match) -->
+      <div id="empty-state" class="hidden flex flex-col items-center justify-center p-12 sm:p-16 text-center">
+        <div class="h-28 w-28 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center text-slate-400 mb-6">
+          <svg class="h-14 w-14 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.008 1.24l.885 1.77a2.25 2.25 0 002.007 1.24h1.98a2.25 2.25 0 002.007-1.24l.885-1.77a2.25 2.25 0 012.007-1.24h3.86m-18 8.75h18a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15A2.25 2.25 0 002.25 6.75v12.5a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+        </div>
+        <h3 id="empty-title" class="font-outfit font-extrabold text-xl text-slate-800 tracking-tight">No Images Found</h3>
+        <p id="empty-desc" class="text-sm text-slate-500 mt-2 max-w-sm">No images have been uploaded yet. Click on the button below to upload your first cloud image.</p>
+        <a href="/upload.html" id="empty-btn" class="mt-6 flex items-center gap-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-xl shadow-md transition-all">
+          Upload Your First Image
+        </a>
+      </div>
+
+      <!-- Real Responsive Table View -->
+      <div id="table-container" class="hidden overflow-x-auto w-full">
+        <table class="min-w-full divide-y divide-slate-100 text-left border-collapse">
+          <thead class="bg-slate-50/70 text-xs font-bold text-slate-500 uppercase tracking-wider select-none">
+            <tr>
+              <th class="py-4.5 px-6 w-16">S.No</th>
+              <th class="py-4.5 px-6 w-24">Preview</th>
+              <th class="py-4.5 px-6">File Name</th>
+              <th class="py-4.5 px-6">S3 Key / URL</th>
+              <th class="py-4.5 px-6 w-32">Status</th>
+              <th class="py-4.5 px-6 w-28">File Size</th>
+              <th class="py-4.5 px-6 w-44">Created Date</th>
+            </tr>
+          </thead>
+          <tbody id="images-tbody" class="divide-y divide-slate-100/80 text-sm text-slate-600 bg-white">
+            <!-- Programmatic rows inserted here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Dynamic Pagination Controls -->
+    <div id="pagination-container" class="hidden flex flex-col sm:flex-row justify-between items-center gap-4 mt-2">
+      <p id="pagination-info" class="text-xs font-semibold text-slate-400">Showing 1 to 10 of 100 entries</p>
+      
+      <div class="flex items-center gap-2">
+        <!-- Prev Button -->
+        <button id="prev-page-btn" class="p-2.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-all">
+          <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        
+        <!-- Interactive Page list -->
+        <div id="pages-list" class="flex gap-1.5">
+          <!-- Page buttons inserted here -->
+        </div>
+
+        <!-- Next Button -->
+        <button id="next-page-btn" class="p-2.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-all">
+          <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Premium High-Res Image Overlay Modal (hidden by default) -->
+  <div id="preview-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative max-w-4xl w-full bg-white/95 border border-slate-100 rounded-3xl overflow-hidden shadow-2xl p-4 flex flex-col items-center">
+      <!-- Close button -->
+      <button id="close-modal-btn" class="absolute top-4 right-4 z-10 p-2.5 rounded-xl bg-slate-100 text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-all">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      
+      <!-- Preview Image -->
+      <div class="w-full max-h-[70vh] rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center">
+        <img id="modal-image" src="" alt="High Res Preview" class="max-w-full max-h-[70vh] object-contain">
+      </div>
+      
+      <!-- Meta details -->
+      <div class="w-full pt-4 px-2 flex justify-between items-center text-xs text-slate-500">
+        <div>
+          <h4 id="modal-title" class="text-sm font-bold text-slate-800">file-name.jpg</h4>
+          <p id="modal-key" class="truncate max-w-md mt-0.5">S3 Key: uploads/timestamp-file-name.jpg</p>
+        </div>
+        <div class="flex gap-4">
+          <span id="modal-size">2.3 MB</span>
+          <a id="modal-download-link" href="#" target="_blank" class="flex items-center gap-1 font-bold text-indigo-600 hover:underline">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            Open in S3
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky footer -->
+  <footer class="glass-card border-t border-slate-100 px-6 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400/80 gap-3">
+      <p>© 2026 CloudSnap. Built with Node.js, Express, S3 & MySQL.</p>
+      <div class="flex gap-4">
+        <span>Environment: Production Ready</span>
+        <span>•</span>
+        <span>Storage: AWS S3 Direct PUT</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core Javascript files -->
+  <script src="/js/toast.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

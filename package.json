@@ -1,0 +1,31 @@
+{
+  "name": "s3-bucket-image-upload",
+  "version": "1.0.0",
+  "description": "Image Management Module using Node.js, Express, MySQL, AWS S3, and Tailwind CSS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "express",
+    "mysql",
+    "aws-s3",
+    "presigned-url",
+    "tailwind"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.588.0",
+    "@aws-sdk/s3-request-presigner": "^3.588.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.9.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.2"
+  }
+}

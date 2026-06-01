@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Image - Cloud Image Manager</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts - Plus Jakarta Sans & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            outfit: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background: radial-gradient(circle at 10% 20%, rgba(243, 246, 255, 1) 0%, rgba(250, 251, 255, 1) 90%);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    .drag-hover {
+      border-color: #6366f1 !important;
+      background: rgba(99, 102, 241, 0.04) !important;
+      transform: scale(1.01);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-700 flex flex-col font-sans">
+
+  <!-- Main Navigation -->
+  <nav class="sticky top-0 z-40 w-full glass-card border-b border-slate-100/80 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 group">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform duration-300">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+        </div>
+        <span class="font-outfit font-bold text-xl text-slate-800 tracking-tight">Cloud<span class="text-indigo-600">Snap</span></span>
+      </a>
+      <a href="/" class="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 px-4 py-2 rounded-xl border border-slate-200/60 transition-all">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Images
+      </a>
+    </div>
+  </nav>
+
+  <!-- Content Container -->
+  <main class="flex-grow flex items-center justify-center p-6 my-4">
+    <div class="w-full max-w-2xl glass-card rounded-3xl shadow-xl p-8 sm:p-10 transition-all duration-300">
+      <div class="text-center mb-8">
+        <h1 class="font-outfit font-extrabold text-3xl text-slate-800 tracking-tight">Upload New Image</h1>
+        <p class="text-sm text-slate-500 mt-2">Upload directly from your browser to Amazon S3 bucket securely using custom S3 Presigned URLs.</p>
+      </div>
+
+      <!-- Drag & Drop upload area -->
+      <div id="dropzone" class="border-2 border-dashed border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-indigo-400 rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center min-h-[220px]">
+        <input type="file" id="file-input" class="hidden" accept="image/*">
+        
+        <div class="h-16 w-16 bg-white border border-slate-100 rounded-2xl flex items-center justify-center text-slate-400 shadow-sm mb-4">
+          <svg class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+          </svg>
+        </div>
+
+        <p class="font-semibold text-slate-700 text-base">Drag & drop your image here, or <span class="text-indigo-600 font-bold hover:underline">browse</span></p>
+        <p class="text-xs text-slate-400 mt-2">Supports JPG, PNG, GIF, WEBP, SVG & BMP (Max size 10MB)</p>
+      </div>
+
+      <!-- Local Image Preview and File Details Card (hidden by default) -->
+      <div id="preview-container" class="hidden mt-6 bg-slate-50/70 border border-slate-100 rounded-2xl p-5 flex items-center gap-4 transition-all duration-300">
+        <div class="relative h-20 w-20 flex-shrink-0 bg-slate-200 border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+          <img id="image-preview" src="#" alt="Preview" class="h-full w-full object-cover">
+        </div>
+        <div class="flex-grow min-w-0">
+          <p id="file-name" class="text-sm font-semibold text-slate-800 truncate">image-name.jpg</p>
+          <div class="flex gap-3 text-xs text-slate-500 mt-1">
+            <span id="file-size">1.2 MB</span>
+            <span>•</span>
+            <span id="file-type">image/jpeg</span>
+          </div>
+        </div>
+        <button id="remove-btn" class="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all" title="Remove image">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Upload Progress Card (hidden by default) -->
+      <div id="progress-container" class="hidden mt-6 bg-slate-50/70 border border-slate-100 rounded-2xl p-5 transition-all duration-300">
+        <div class="flex items-center justify-between mb-2">
+          <span id="progress-status" class="text-xs font-semibold text-indigo-600">Uploading to AWS S3...</span>
+          <span id="progress-percentage" class="text-xs font-bold text-slate-700">0%</span>
+        </div>
+        <!-- Progress Bar Background -->
+        <div class="h-2 w-full bg-slate-200/80 rounded-full overflow-hidden">
+          <div id="progress-bar" class="h-full bg-indigo-600 rounded-full w-0 transition-all duration-150 ease-out"></div>
+        </div>
+        <div class="flex justify-between items-center mt-2 text-[10px] text-slate-400">
+          <span id="upload-speed">Calculating speed...</span>
+          <span id="upload-estimate">Time remaining...</span>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="mt-8 flex gap-4">
+        <button id="cancel-btn" class="w-1/2 py-3.5 px-5 font-semibold text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200/80 rounded-xl border border-transparent transition-all">
+          Cancel
+        </button>
+        <button id="upload-btn" disabled class="w-1/2 py-3.5 px-5 font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-lg shadow-indigo-100 hover:shadow-indigo-200 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+          Upload to Cloud
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Sticky footer -->
+  <footer class="glass-card border-t border-slate-100 px-6 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400/80 gap-3">
+      <p>© 2026 CloudSnap. Built with Node.js, Express, S3 & MySQL.</p>
+      <div class="flex gap-4">
+        <span>Environment: Production Ready</span>
+        <span>•</span>
+        <span>Storage: AWS S3 Direct PUT</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core Javascript files -->
+  <script src="/js/toast.js"></script>
+  <script src="/js/upload.js"></script>
+</body>
+</html>
