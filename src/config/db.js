@@ -57,11 +57,54 @@ async function initializeDatabase() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `;
 
+  // Create table for posts metadata
+  const createPostsTableQuery = `
+    CREATE TABLE IF NOT EXISTS \`linkedin_posts\` (
+      \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+      \`title\` VARCHAR(255) NULL,
+      \`content\` TEXT NOT NULL,
+      \`image_id\` INT NULL,
+      \`post_type\` ENUM('POST', 'ARTICLE_LINK') DEFAULT 'POST',
+      \`external_url\` VARCHAR(512) NULL,
+      \`status\` ENUM('DRAFT', 'PENDING_N8N', 'PUBLISHED', 'FAILED') DEFAULT 'DRAFT',
+      \`linkedin_post_urn\` VARCHAR(255) NULL,
+      \`error_message\` TEXT NULL,
+      \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      \`published_at\` TIMESTAMP NULL,
+      FOREIGN KEY (\`image_id\`) REFERENCES \`images\`(\`id\`) ON DELETE SET NULL,
+      INDEX \`idx_status\` (\`status\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `;
+
+  // Create table for dynamic token rotation and security (refresh_token is nullable for standard apps)
+  const createOauthTableQuery = `
+    CREATE TABLE IF NOT EXISTS \`linkedin_oauth\` (
+      \`id\` INT PRIMARY KEY DEFAULT 1,
+      \`access_token\` TEXT NOT NULL,
+      \`refresh_token\` TEXT NULL,
+      \`access_token_expires_at\` TIMESTAMP NOT NULL,
+      \`refresh_token_expires_at\` TIMESTAMP NULL,
+      \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `;
+
   try {
     await pool.query(createTableQuery);
     console.log('[DB] Table "images" is verified/created.');
+    await pool.query(createPostsTableQuery);
+    console.log('[DB] Table "linkedin_posts" is verified/created.');
+    await pool.query(createOauthTableQuery);
+    console.log('[DB] Table "linkedin_oauth" is verified/created.');
+    
+    // Self-healing migration to make refresh_token nullable for existing databases
+    await pool.query(`
+      ALTER TABLE \`linkedin_oauth\` 
+      MODIFY COLUMN \`refresh_token\` TEXT NULL,
+      MODIFY COLUMN \`refresh_token_expires_at\` TIMESTAMP NULL
+    `);
+    console.log('[DB] Table "linkedin_oauth" columns altered successfully.');
   } catch (error) {
-    console.error('[DB] Failed to create table "images":', error.message);
+    console.error('[DB] Failed to verify/create database tables:', error.message);
     throw error;
   }
 }

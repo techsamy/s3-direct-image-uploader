@@ -246,3 +246,80 @@ Before going live, implement these advanced security recommendations:
    ```
 3. **Database Security**:
    Ensure your MySQL server does not have public access (bind-address `127.0.0.1` or within a private VPC network subnet if using AWS RDS) and disable the root user remote log-in.
+
+---
+
+## 🔗 6. LinkedIn & n8n Automation Setup
+
+To enable posting updates to your LinkedIn Company Page, follow this configuration guide.
+
+### A. Environment Variables Setup
+Add the following keys to your production `.env` file:
+```ini
+# LinkedIn OAuth configuration
+LINKEDIN_CLIENT_ID=your-linkedin-client-id
+LINKEDIN_CLIENT_SECRET=your-linkedin-client-secret
+LINKEDIN_REDIRECT_URI=https://yourproductiondomain.com/api/auth/linkedin/callback
+
+# n8n Automation Bridge
+N8N_WEBHOOK_URL=https://your-n8n-instance.com/webhook/publish-linkedin
+```
+
+### B. LinkedIn Developer Portal Config
+1. Go to the [LinkedIn Developer Portal](https://developer.linkedin.com/) and create a new App.
+2. Link the app to your company page and request authorization permissions.
+3. Under the **Auth** tab:
+   - Add your redirect callback URI under **Authorized Redirect URLs**: `https://yourproductiondomain.com/api/auth/linkedin/callback`
+   - Enable the **Share on LinkedIn** and **Sign In with LinkedIn** services to obtain authorization scopes (`w_member_social`, `w_organization_social`, `r_basicprofile`).
+
+### C. n8n Workflow Construction
+Set up an n8n workflow to act as the publishing bridge.
+
+#### Step 1: Webhook Trigger Node
+- **HTTP Method**: `POST`
+- **Path**: `publish-linkedin`
+- **Response Mode**: `onReceived` (returns immediately with status 200)
+
+#### Step 2: HTTP Request Node (Call LinkedIn API)
+- **Method**: `POST`
+- **URL**: `https://api.linkedin.com/v2/posts`
+- **Headers**:
+  - `Authorization`: `Bearer {{ $json.body.accessToken }}`
+  - `Content-Type`: `application/json`
+  - `X-Restli-Protocol-Version`: `2.0.0`
+- **Body Content** (JSON):
+  ```json
+  {
+    "author": "urn:li:organization:YOUR_COMPANY_PAGE_ID",
+    "commentary": "{{ $json.body.content }}",
+    "visibility": "PUBLIC",
+    "distribution": {
+      "feedDistribution": "MAIN_FEED",
+      "targetCountriesAndRegions": [],
+      "targetLanguages": []
+    },
+    "lifecycleState": "PUBLISHED",
+    "isReshareDisabledByAuthor": false
+  }
+  ```
+
+#### Step 3: Callback Node (Confirm Publication back to CloudSnap)
+- **Method**: `POST`
+- **URL**: `https://yourproductiondomain.com/api/posts/{{ $json.body.postId }}/confirm-published`
+- **Headers**:
+  - `Content-Type`: `application/json`
+- **Body Content** (JSON):
+  ```json
+  {
+    "linkedin_post_urn": "{{ $json.id }}"
+  }
+  ```
+
+If the LinkedIn API call fails in n8n, route the error branch to a similar callback with:
+```json
+{
+  "error_message": "LinkedIn API returned error description..."
+}
+```
+This updates the dashboard status instantly to `FAILED` and prints the error log on screen.
+

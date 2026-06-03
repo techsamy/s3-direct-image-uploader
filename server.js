@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const path = require('path');
 const db = require('./src/config/db');
 const imageRoutes = require('./src/routes/imageRoutes');
+const authRoutes = require('./src/routes/authRoutes');
+const postRoutes = require('./src/routes/postRoutes');
 
 require('dotenv').config();
 
@@ -23,8 +25,14 @@ app.use(express.urlencoded({ extended: true }));
 // Serve frontend static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connect S3 Image Management APIs
+// Connect APIs
 app.use('/api/images', imageRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/posts', postRoutes);
+// Static Privacy Policy Route
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
 
 // Catch-all route to serve the SPA or default landing page (index.html)
 app.get('*', (req, res, next) => {

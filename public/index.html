@@ -70,103 +70,285 @@
   <!-- Main Workspace -->
   <main class="flex-grow max-w-7xl w-full mx-auto p-6 lg:p-8 flex flex-col gap-6">
     
-    <!-- Hero Filter Section -->
-    <div class="w-full glass-card rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center gap-4 justify-between">
-      <!-- Search Box -->
-      <div class="relative w-full sm:max-w-md">
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.602 10.602z" />
-          </svg>
-        </span>
-        <input type="text" id="search-input" placeholder="Search by file name..." class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200/80 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700 placeholder-slate-400">
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-slate-200/80 gap-6 select-none">
+      <button id="tab-gallery" class="pb-3 text-sm font-bold text-indigo-600 border-b-2 border-indigo-600 transition-all focus:outline-none">
+        S3 Images Gallery
+      </button>
+      <button id="tab-posts" class="pb-3 text-sm font-bold text-slate-400 hover:text-slate-600 border-b-2 border-transparent transition-all focus:outline-none flex items-center gap-1.5">
+        LinkedIn Automation
+        <span class="bg-indigo-50 text-indigo-600 px-1.5 py-0.5 text-[10px] rounded-full font-bold">New</span>
+      </button>
+    </div>
+
+    <!-- SECTION 1: S3 Images Gallery -->
+    <div id="section-gallery" class="flex flex-col gap-6">
+      <!-- Hero Filter Section -->
+      <div class="w-full glass-card rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center gap-4 justify-between">
+        <!-- Search Box -->
+        <div class="relative w-full sm:max-w-md">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.602 10.602z" />
+            </svg>
+          </span>
+          <input type="text" id="search-input" placeholder="Search by file name..." class="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200/80 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700 placeholder-slate-400">
+        </div>
+        
+        <!-- Counter & Page size Selector -->
+        <div class="flex items-center gap-4 text-xs font-semibold text-slate-500 justify-between w-full sm:w-auto">
+          <div class="flex items-center gap-2">
+            <span>Items per page:</span>
+            <select id="limit-select" class="bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-600 focus:outline-none focus:border-indigo-500">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+          <span id="total-count-label" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100/50">Total: 0 images</span>
+        </div>
       </div>
-      
-      <!-- Counter & Page size Selector -->
-      <div class="flex items-center gap-4 text-xs font-semibold text-slate-500 justify-between w-full sm:w-auto">
+
+      <!-- Images List Grid/Table View -->
+      <div class="w-full glass-card rounded-3xl shadow-md overflow-hidden border border-slate-100/80">
+        <!-- Loading Skeleton (visible while fetching) -->
+        <div id="skeleton-loading" class="hidden divide-y divide-slate-100">
+          <div class="p-6 flex items-center justify-between"><div class="shimmer h-8 w-1/4 rounded-lg"></div><div class="shimmer h-8 w-1/12 rounded-lg"></div></div>
+          <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/3 rounded"></div><div class="shimmer h-4 w-1/6 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
+          <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/4 rounded"></div><div class="shimmer h-4 w-1/5 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
+          <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/2 rounded"></div><div class="shimmer h-4 w-1/8 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
+        </div>
+
+        <!-- Empty State Card (visible when no records match) -->
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center p-12 sm:p-16 text-center">
+          <div class="h-28 w-28 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center text-slate-400 mb-6">
+            <svg class="h-14 w-14 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.008 1.24l.885 1.77a2.25 2.25 0 002.007 1.24h1.98a2.25 2.25 0 002.007-1.24l.885-1.77a2.25 2.25 0 012.007-1.24h3.86m-18 8.75h18a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15A2.25 2.25 0 002.25 6.75v12.5a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+          </div>
+          <h3 id="empty-title" class="font-outfit font-extrabold text-xl text-slate-800 tracking-tight">No Images Found</h3>
+          <p id="empty-desc" class="text-sm text-slate-500 mt-2 max-w-sm">No images have been uploaded yet. Click on the button below to upload your first cloud image.</p>
+          <a href="/upload.html" id="empty-btn" class="mt-6 flex items-center gap-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-xl shadow-md transition-all">
+            Upload Your First Image
+          </a>
+        </div>
+
+        <!-- Real Responsive Table View -->
+        <div id="table-container" class="hidden overflow-x-auto w-full">
+          <table class="min-w-full divide-y divide-slate-100 text-left border-collapse">
+            <thead class="bg-slate-50/70 text-xs font-bold text-slate-500 uppercase tracking-wider select-none">
+              <tr>
+                <th class="py-4.5 px-6 w-16">S.No</th>
+                <th class="py-4.5 px-6 w-24">Preview</th>
+                <th class="py-4.5 px-6">File Name</th>
+                <th class="py-4.5 px-6">S3 Key / URL</th>
+                <th class="py-4.5 px-6 w-32">Status</th>
+                <th class="py-4.5 px-6 w-28">File Size</th>
+                <th class="py-4.5 px-6 w-44">Created Date</th>
+              </tr>
+            </thead>
+            <tbody id="images-tbody" class="divide-y divide-slate-100/80 text-sm text-slate-600 bg-white">
+              <!-- Programmatic rows inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Dynamic Pagination Controls -->
+      <div id="pagination-container" class="hidden flex flex-col sm:flex-row justify-between items-center gap-4 mt-2">
+        <p id="pagination-info" class="text-xs font-semibold text-slate-400">Showing 1 to 10 of 100 entries</p>
+        
         <div class="flex items-center gap-2">
-          <span>Items per page:</span>
-          <select id="limit-select" class="bg-slate-50 border border-slate-200/80 rounded-lg px-2 py-1.5 text-slate-600 focus:outline-none focus:border-indigo-500">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
-            <option value="50">50</option>
+          <!-- Prev Button -->
+          <button id="prev-page-btn" class="p-2.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-all">
+            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+          
+          <!-- Interactive Page list -->
+          <div id="pages-list" class="flex gap-1.5">
+            <!-- Page buttons inserted here -->
+          </div>
+
+          <!-- Next Button -->
+          <button id="next-page-btn" class="p-2.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-all">
+            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: LinkedIn Posts & Automation -->
+    <div id="section-posts" class="hidden flex flex-col gap-6">
+      
+      <!-- Posts Header Info Card -->
+      <div class="w-full glass-card rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-outfit font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-2">
+            <svg class="h-6 w-6 text-[#0077b5]" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+            </svg>
+            LinkedIn Posting Dashboard
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Compose dynamic posts and automate target publication via n8n integration.</p>
+        </div>
+        
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <!-- Auth Link -->
+          <a href="/api/auth/linkedin" target="_blank" class="flex-1 md:flex-initial text-center text-xs font-bold text-[#0077b5] border border-[#0077b5]/30 bg-[#0077b5]/5 hover:bg-[#0077b5]/10 px-4 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+            </svg>
+            Auth LinkedIn
+          </a>
+          <!-- Compose Trigger -->
+          <button id="btn-compose" class="flex-1 md:flex-initial flex items-center justify-center gap-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-100 transition-all">
+            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+            </svg>
+            Compose Post
+          </button>
+        </div>
+      </div>
+
+      <!-- Posts List Container -->
+      <div class="w-full glass-card rounded-3xl shadow-md overflow-hidden border border-slate-100/80">
+        
+        <!-- Loading Skeleton for Posts -->
+        <div id="posts-skeleton" class="hidden divide-y divide-slate-100">
+          <div class="p-5 flex items-center gap-6"><div class="shimmer h-4 w-1/4 rounded"></div><div class="shimmer h-4 w-1/3 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
+          <div class="p-5 flex items-center gap-6"><div class="shimmer h-4 w-1/4 rounded"></div><div class="shimmer h-4 w-1/3 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
+        </div>
+
+        <!-- Posts Empty State -->
+        <div id="posts-empty" class="hidden flex flex-col items-center justify-center p-12 sm:p-16 text-center">
+          <div class="h-24 w-24 bg-slate-50 border border-slate-200/60 rounded-full flex items-center justify-center text-slate-400 mb-6">
+            <svg class="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
+            </svg>
+          </div>
+          <h3 class="font-outfit font-extrabold text-xl text-slate-800 tracking-tight">No Posts Drafted</h3>
+          <p class="text-sm text-slate-500 mt-2 max-w-sm">You haven't composed any LinkedIn updates yet. Tap "Compose Post" to start drafting your content.</p>
+        </div>
+
+        <!-- Real Posts Table -->
+        <div id="posts-table-container" class="hidden overflow-x-auto w-full">
+          <table class="min-w-full divide-y divide-slate-100 text-left border-collapse">
+            <thead class="bg-slate-50/70 text-xs font-bold text-slate-500 uppercase tracking-wider select-none">
+              <tr>
+                <th class="py-4.5 px-6 w-16">ID</th>
+                <th class="py-4.5 px-6 w-28">Type</th>
+                <th class="py-4.5 px-6">Post Body & Title</th>
+                <th class="py-4.5 px-6 w-24">Image</th>
+                <th class="py-4.5 px-6 w-36">Status</th>
+                <th class="py-4.5 px-6 w-44">Created Date</th>
+                <th class="py-4.5 px-6 w-36 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="posts-tbody" class="divide-y divide-slate-100/80 text-sm text-slate-600 bg-white">
+              <!-- Programmatic posts rows go here -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Compose Post Overlay Modal (hidden by default) -->
+  <div id="compose-modal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="relative max-w-2xl w-full bg-white/95 border border-slate-100 rounded-3xl overflow-hidden shadow-2xl p-6 flex flex-col gap-5">
+      
+      <!-- Close button -->
+      <button id="close-compose-btn" class="absolute top-4 right-4 z-10 p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-rose-500 hover:bg-rose-50 transition-all">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div>
+        <h3 class="font-outfit font-extrabold text-xl text-slate-800 tracking-tight">Compose LinkedIn Post</h3>
+        <p class="text-xs text-slate-400 mt-1">Draft updates to publish to your organization feed.</p>
+      </div>
+
+      <form id="compose-form" class="flex flex-col gap-4">
+        
+        <!-- Post Type Selection -->
+        <div class="flex flex-col gap-1.5">
+          <label for="compose-type" class="text-xs font-bold text-slate-500 uppercase tracking-wide">Post Type</label>
+          <select id="compose-type" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700">
+            <option value="POST" selected>Standard Feed Post</option>
+            <option value="ARTICLE_LINK">Article Link Share</option>
           </select>
         </div>
-        <span id="total-count-label" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-100/50">Total: 0 images</span>
-      </div>
-    </div>
 
-    <!-- Images List Grid/Table View -->
-    <div class="w-full glass-card rounded-3xl shadow-md overflow-hidden border border-slate-100/80">
-      <!-- Loading Skeleton (visible while fetching) -->
-      <div id="skeleton-loading" class="hidden divide-y divide-slate-100">
-        <div class="p-6 flex items-center justify-between"><div class="shimmer h-8 w-1/4 rounded-lg"></div><div class="shimmer h-8 w-1/12 rounded-lg"></div></div>
-        <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/3 rounded"></div><div class="shimmer h-4 w-1/6 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
-        <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/4 rounded"></div><div class="shimmer h-4 w-1/5 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
-        <div class="p-5 flex items-center gap-6"><div class="shimmer h-12 w-12 rounded-xl flex-shrink-0"></div><div class="shimmer h-4 w-1/2 rounded"></div><div class="shimmer h-4 w-1/8 rounded"></div><div class="shimmer h-4 w-1/12 rounded"></div></div>
-      </div>
-
-      <!-- Empty State Card (visible when no records match) -->
-      <div id="empty-state" class="hidden flex flex-col items-center justify-center p-12 sm:p-16 text-center">
-        <div class="h-28 w-28 bg-indigo-50 border border-indigo-100 rounded-full flex items-center justify-center text-slate-400 mb-6">
-          <svg class="h-14 w-14 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 012.008 1.24l.885 1.77a2.25 2.25 0 002.007 1.24h1.98a2.25 2.25 0 002.007-1.24l.885-1.77a2.25 2.25 0 012.007-1.24h3.86m-18 8.75h18a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15A2.25 2.25 0 002.25 6.75v12.5a2.25 2.25 0 002.25 2.25z" />
-          </svg>
-        </div>
-        <h3 id="empty-title" class="font-outfit font-extrabold text-xl text-slate-800 tracking-tight">No Images Found</h3>
-        <p id="empty-desc" class="text-sm text-slate-500 mt-2 max-w-sm">No images have been uploaded yet. Click on the button below to upload your first cloud image.</p>
-        <a href="/upload.html" id="empty-btn" class="mt-6 flex items-center gap-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 rounded-xl shadow-md transition-all">
-          Upload Your First Image
-        </a>
-      </div>
-
-      <!-- Real Responsive Table View -->
-      <div id="table-container" class="hidden overflow-x-auto w-full">
-        <table class="min-w-full divide-y divide-slate-100 text-left border-collapse">
-          <thead class="bg-slate-50/70 text-xs font-bold text-slate-500 uppercase tracking-wider select-none">
-            <tr>
-              <th class="py-4.5 px-6 w-16">S.No</th>
-              <th class="py-4.5 px-6 w-24">Preview</th>
-              <th class="py-4.5 px-6">File Name</th>
-              <th class="py-4.5 px-6">S3 Key / URL</th>
-              <th class="py-4.5 px-6 w-32">Status</th>
-              <th class="py-4.5 px-6 w-28">File Size</th>
-              <th class="py-4.5 px-6 w-44">Created Date</th>
-            </tr>
-          </thead>
-          <tbody id="images-tbody" class="divide-y divide-slate-100/80 text-sm text-slate-600 bg-white">
-            <!-- Programmatic rows inserted here -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Dynamic Pagination Controls -->
-    <div id="pagination-container" class="hidden flex flex-col sm:flex-row justify-between items-center gap-4 mt-2">
-      <p id="pagination-info" class="text-xs font-semibold text-slate-400">Showing 1 to 10 of 100 entries</p>
-      
-      <div class="flex items-center gap-2">
-        <!-- Prev Button -->
-        <button id="prev-page-btn" class="p-2.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-all">
-          <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
-        </button>
-        
-        <!-- Interactive Page list -->
-        <div id="pages-list" class="flex gap-1.5">
-          <!-- Page buttons inserted here -->
+        <!-- Title Input (Optional) -->
+        <div class="flex flex-col gap-1.5">
+          <label for="compose-title" class="text-xs font-bold text-slate-500 uppercase tracking-wide">Title <span class="text-slate-300 font-normal">(Optional)</span></label>
+          <input type="text" id="compose-title" placeholder="Enter post header or title..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700">
         </div>
 
-        <!-- Next Button -->
-        <button id="next-page-btn" class="p-2.5 rounded-lg border border-slate-200 bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-all">
-          <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
-        </button>
-      </div>
+        <!-- External Link Input (Shown only for ARTICLE_LINK) -->
+        <div id="compose-link-container" class="hidden flex flex-col gap-1.5">
+          <label for="compose-link" class="text-xs font-bold text-slate-500 uppercase tracking-wide">External Article Link</label>
+          <input type="url" id="compose-link" placeholder="https://example.com/your-article" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700">
+        </div>
+
+        <!-- Description/Body Text (Mandatory) -->
+        <div class="flex flex-col gap-1.5">
+          <label for="compose-content" class="text-xs font-bold text-slate-500 uppercase tracking-wide">Post Content <span class="text-rose-500">*</span></label>
+          <textarea id="compose-content" rows="4" placeholder="Write your post updates here..." required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200/80 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:bg-white transition-all text-slate-700 resize-none"></textarea>
+        </div>
+
+        <!-- Optional Image Upload Selector -->
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Optional Cover Image</label>
+          
+          <div class="flex gap-4 items-center">
+            <!-- Custom File Select Area -->
+            <label class="flex items-center gap-2 px-4 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl cursor-pointer text-xs font-bold text-slate-600 transition-all select-none">
+              <svg class="h-4.5 w-4.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Choose Image
+              <input type="file" id="compose-image-input" accept="image/*" class="hidden">
+            </label>
+            
+            <button type="button" id="compose-image-remove" class="hidden text-xs font-semibold text-rose-500 hover:text-rose-700 transition-all">
+              Remove
+            </button>
+
+            <!-- Dynamic Filename / Preview -->
+            <span id="compose-image-filename" class="text-xs text-slate-400 truncate max-w-xs">No file selected</span>
+          </div>
+
+          <!-- Small Preview Box -->
+          <div id="compose-image-preview-container" class="hidden mt-2 h-20 w-32 rounded-lg overflow-hidden border border-slate-100 bg-slate-50 flex items-center justify-center">
+            <img id="compose-image-preview" src="" alt="Thumbnail Preview" class="max-h-full max-w-full object-contain">
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end gap-3 pt-3 border-t border-slate-100 mt-2">
+          <button type="button" id="compose-cancel-btn" class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all">
+            Cancel
+          </button>
+          
+          <button type="submit" id="compose-submit-btn" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white shadow-md shadow-indigo-100 transition-all flex items-center gap-2">
+            <span id="compose-submit-label">Save Draft</span>
+            <div id="compose-submit-spinner" class="hidden h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          </button>
+        </div>
+
+      </form>
     </div>
+  </div>
+
   </main>
 
   <!-- Premium High-Res Image Overlay Modal (hidden by default) -->
@@ -218,5 +400,6 @@
   <!-- Core Javascript files -->
   <script src="/js/toast.js"></script>
   <script src="/js/app.js"></script>
+  <script src="/js/posts.js"></script>
 </body>
 </html>
